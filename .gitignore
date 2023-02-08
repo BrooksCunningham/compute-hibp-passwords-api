@@ -1,0 +1,9 @@
+/target
+**/*.rs.bk
+/bin
+/pkg
+*.lock
+hibpdata.txt
+hibpdata5mil.txt
+hibpdata.json
+pwned-passwords-sha1-ordered-by-hash-v8.txt
