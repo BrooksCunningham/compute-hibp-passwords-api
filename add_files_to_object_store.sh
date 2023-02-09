@@ -21,7 +21,7 @@ upload() {
     mv $filename processed/$filename
 
     curl -XPUT  "https://api.fastly.com/resources/stores/object/$OBJECTSTORE/keys/$OBJKEY" \
-       -H "Fastly-Key: oL8fkUH5Bmthk_MdVfj-PiR6XP-QlY_a" \
+       -H "Fastly-Key: $FASTLYPERSONALTOKEN" \
        -H "Accept: application/json" \
        -H "if-generation-match:0"
        --data-binary "@processed/$filename"
