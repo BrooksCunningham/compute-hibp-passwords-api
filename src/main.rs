@@ -20,28 +20,32 @@ fn main(req: Request) -> Result<Response, Error> {
 
     let mut qs: Vec<(String, String)> = req.get_query()?;
 
-    let hash_query = uri_vec[2];
+    
+    // TODO check if uri vec is greater than 2
+    if uri_vec.len() > 1 {
+        if uri_vec[1] == "range" {
+            let hash_query = uri_vec[2];
+            /*
+                Construct an ObjectStore instance which is connected to the Object Store named `my-store`
+                [Documentation for the ObjectStore open method can be found here](https://docs.rs/fastly/latest/fastly/struct.ObjectStore.html#method.open)
+            */
+            
+            let mut store =
+                ObjectStore::open(&store).map(|store| store.expect("ObjectStore exists"))?;
+    
+            let mut entry_resp = match store.lookup(&hash_query)? {
+                // Return the response if there is a match
+                Some(entry) => Response::from_body(entry),
+                // Return a helpful message if there is no entry
+                _ => Response::from_body("try again with a request like /range/00000"),
+            };
+    
+            // Allows for compression hints
+            entry_resp.set_header("x-compress-hint", "on");
+    
+            return Ok(entry_resp);        
+        } 
+    }
 
-    if uri_vec[1] == "range" {
-        /*
-            Construct an ObjectStore instance which is connected to the Object Store named `my-store`
-            [Documentation for the ObjectStore open method can be found here](https://docs.rs/fastly/latest/fastly/struct.ObjectStore.html#method.open)
-        */
-        
-        let mut store =
-            ObjectStore::open(&store).map(|store| store.expect("ObjectStore exists"))?;
-
-        let mut entry_resp = match store.lookup(&hash_query)? {
-            // Return the response if there is a match
-            Some(entry) => Response::from_body(entry),
-            // Return a helpful message if there is no entry
-            _ => Response::from_body("try again with a request like /range/00000"),
-        };
-
-        // Allows for compression hints
-        entry_resp.set_header("x-compress-hint", "on");
-
-        return Ok(entry_resp);        
-    } 
     return Ok(Response::from_body(format!("{}", "try again with a request like /range/00000")));
 }
