@@ -13,24 +13,35 @@ fn main(req: Request) -> Result<Response, Error> {
     let store = "hibp-store";
         
     let path = req.get_path();
-    let mut qs: Vec<(String, String)> = req.get_query()?;
-    let hash_qs = req.get_query_parameter("hash").unwrap();
-    println!("hash_qs query: {}", hash_qs);
 
-    if path == "/range" {
+    let mut path_split = path.split("/");
+
+    let uri_vec: Vec<&str> = path_split.collect();
+
+    let mut qs: Vec<(String, String)> = req.get_query()?;
+
+    let hash_query = uri_vec[2];
+
+    if uri_vec[1] == "range" {
         /*
             Construct an ObjectStore instance which is connected to the Object Store named `my-store`
             [Documentation for the ObjectStore open method can be found here](https://docs.rs/fastly/latest/fastly/struct.ObjectStore.html#method.open)
         */
         
-
         let mut store =
             ObjectStore::open(&store).map(|store| store.expect("ObjectStore exists"))?;
 
-        let entry = store.lookup(hash_qs)?;
+        let mut entry_resp = match store.lookup(&hash_query)? {
+            // Return the response if there is a match
+            Some(entry) => Response::from_body(entry),
+            // Return a helpful message if there is no entry
+            _ => Response::from_body("try again with a request like /range/00000"),
+        };
 
-        return Ok(Response::from_body(entry.unwrap()))
-        
+        // Allows for compression hints
+        entry_resp.set_header("x-compress-hint", "on");
+
+        return Ok(entry_resp);        
     } 
-    return Ok(Response::from_body(format!("{}", "missed")));
+    return Ok(Response::from_body(format!("{}", "try again with a request like /range/00000")));
 }
